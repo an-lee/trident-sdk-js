@@ -30,6 +30,16 @@ describe("client", () => {
     expect(res).toHaveProperty("id");
   });
 
+  it("update collection", async () => {
+    const res = await client.updateCollection(
+      "0fd8bb90-5a14-4d34-b448-996d26dd2672",
+      {
+        description: "Update from TridentSDKJS",
+      }
+    );
+    expect(res).toHaveProperty("id");
+  });
+
   it("collectible", async () => {
     const res = await client.collectible(
       "0aa776ce1bea943f279ff5d47b89fd72b145b1e89cb094f8064ffc58af0e162e"

@@ -4,7 +4,7 @@ import {
   signAccessToken,
 } from "@mixin.dev/mixin-node-sdk";
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
-import { Keystore, Order } from "./types";
+import { Collectible, Collection, Keystore, Metadata, Order } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
 export class Client {
@@ -44,36 +44,86 @@ export class Client {
   }
 
   collections() {
-    if (!this.keystore) {
-      throw new Error("keystore required");
-    }
-
-    const authorization = signAccessToken("GET", "/me", "", uuidv4(), {
-      user_id: this.keystore.client_id,
-      ...this.keystore,
-    });
-
     return this.api.get("api/collections", {
       headers: {
-        Authorization: `Bearer ${authorization}`,
+        Authorization: `Bearer ${this.accessToken()}`,
       },
     });
   }
 
-  collection(id: string) {
+  collection(id: string): Promise<Collection> {
     return this.api.get(`api/collections/${id}`);
   }
 
-  collectible(metahash: string) {
+  createCollection(params: {
+    name: string;
+    symbol: string;
+    description: string;
+    split: string;
+    external_url: string;
+    icon_url?: string;
+    icon_base64?: string;
+  }): Promise<Collection> {
+    return this.api.post(`api/collections`, params, {
+      headers: {
+        Authorization: `Bearer ${this.accessToken()}`,
+      },
+    });
+  }
+
+  updateCollection(
+    id: string,
+    params: {
+      description?: string;
+      split?: string;
+      external_url?: string;
+      icon_url?: string;
+      icon_base64?: string;
+    }
+  ): Promise<Collection> {
+    return this.api.put(`api/collections/${id}`, params, {
+      headers: {
+        Authorization: `Bearer ${this.accessToken()}`,
+      },
+    });
+  }
+
+  collectible(metahash: string): Promise<Collectible> {
     return this.api.get(`api/collectibles/${metahash}`);
   }
 
-  orders(): Promise<{
+  uploadMetadata(params: {
+    metadata: Metadata;
+    metahash: string;
+  }): Promise<Metadata> {
+    return this.api.post("api/collectibles", params, {
+      headers: {
+        Authorization: `Bearer ${this.accessToken()}`,
+      },
+    });
+  }
+
+  orders(params?: {
+    state?: "open" | "completed";
+    type?: "ask" | "bid" | "auction";
+    page?: number;
+  }): Promise<{
     orders: Order[];
     current_page: number;
     next_page: number & null;
     previous_page: number & null;
   }> {
-    return this.api.get("api/orders");
+    return this.api.get("api/orders", { params });
+  }
+
+  accessToken(): string {
+    if (!this.keystore) {
+      throw new Error("keystore required");
+    }
+
+    return signAccessToken("GET", "/me", "", uuidv4(), {
+      user_id: this.keystore.client_id,
+      ...this.keystore,
+    });
   }
 }

@@ -20,6 +20,19 @@ export interface Currency {
   icon_url: string;
 }
 
+export interface Collection {
+  id: string;
+  name: string;
+  symbol: string;
+  description: string;
+  external_url: string;
+  split: string;
+  icon: {
+    url: string;
+  };
+  creator: User;
+}
+
 export interface Collectible {
   collection_id: string;
   identerfier: string;
@@ -28,6 +41,38 @@ export interface Collectible {
   name: string;
   icon_url: string;
   media_url: string;
+}
+
+export interface Metadata {
+  creator: {
+    id: string;
+    name: string;
+  };
+  collection: {
+    algorithm: string;
+    name: string;
+    symbol: string;
+    description: string;
+    icon: {
+      url: string;
+    };
+  };
+  token: {
+    identerfier: string;
+    name: string;
+    description: string;
+    icon: {
+      url: string;
+    };
+    media: {
+      url: string;
+      hash: string;
+    };
+  };
+  checksum: {
+    fields: string[];
+    algorithm: string;
+  };
 }
 
 export interface Order {
