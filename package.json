@@ -1,0 +1,10 @@
+{
+  "name": "trident-sdk-js",
+  "version": "0.1.0",
+  "description": "Trident SDK",
+  "main": "index.js",
+  "repository": "https://github.com/TheTridentOne/trident-sdk-js.git",
+  "author": "Trident",
+  "license": "MIT",
+  "private": false
+}
