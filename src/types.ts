@@ -78,7 +78,7 @@ export interface Metadata {
 export interface Order {
   id: string;
   type: string;
-  state: string;
+  state: "open" | "completed" | "canceled" | "expired";
   price: string;
   royalty: string;
   split: string;
@@ -88,7 +88,7 @@ export interface Order {
   completed_at?: string;
   item: Collectible;
   currency: Currency;
-  maker?: User;
+  maker: User;
   taker?: User;
   owner?: User;
 }
