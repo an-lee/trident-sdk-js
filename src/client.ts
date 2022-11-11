@@ -2,7 +2,7 @@ import { MixinApi, signAccessToken } from "@mixin.dev/mixin-node-sdk";
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import { Collectible, Collection, Keystore, Metadata, Order } from "./types";
 import { v4 as uuidv4 } from "uuid";
-import { ExchangeAssetId, ExchangeMinimumAmount, TridentMTG } from "./constant";
+import { ExchangeAssetId, ExchangeMinimumAmount } from "./constant";
 import { uniqueTokenId } from "./utils";
 
 export class Client {
@@ -131,7 +131,7 @@ export class Client {
       trace_id?: string;
     }
   ): Promise<Object> {
-    if (!this.mixinApi) {
+    if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
@@ -155,7 +155,7 @@ export class Client {
         threshold: action.mtg.threshold,
       },
     };
-    return this.mixinApi.payment.request(tx);
+    return this.mixinApi.transfer.toAddress(this.keystore.pin, tx);
   }
 
   async auctionOrder(
@@ -169,7 +169,7 @@ export class Client {
       trace_id?: string;
     }
   ): Promise<Object> {
-    if (!this.mixinApi) {
+    if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
@@ -194,7 +194,7 @@ export class Client {
         threshold: action.mtg.threshold,
       },
     };
-    return this.mixinApi.payment.request(tx);
+    return this.mixinApi.transfer.toAddress(this.keystore.pin, tx);
   }
 
   async bidOrder(
@@ -207,7 +207,7 @@ export class Client {
       trace_id?: string;
     }
   ): Promise<Object> {
-    if (!this.mixinApi) {
+    if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
@@ -230,7 +230,7 @@ export class Client {
         threshold: action.mtg.threshold,
       },
     };
-    return this.mixinApi.payment.request(tx);
+    return this.mixinApi.transfer.toAddress(this.keystore.pin, tx);
   }
 
   async fillOrder(
@@ -241,7 +241,7 @@ export class Client {
       trace_id?: string;
     }
   ): Promise<Object> {
-    if (!this.mixinApi) {
+    if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
@@ -270,7 +270,7 @@ export class Client {
         threshold: action.mtg.threshold,
       },
     };
-    return this.mixinApi.payment.request(tx);
+    return this.mixinApi.transfer.toAddress(this.keystore.pin, tx);
   }
 
   async cancelOrder(
@@ -281,7 +281,7 @@ export class Client {
       trace_id?: string;
     }
   ): Promise<Object> {
-    if (!this.mixinApi) {
+    if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
@@ -304,8 +304,8 @@ export class Client {
     }
 
     const tx = {
-      asset_id: order.currency.asset_id,
-      amount: order.price,
+      asset_id: ExchangeAssetId,
+      amount: ExchangeMinimumAmount,
       memo: action.memo,
       trace_id: params.trace_id || uuidv4(),
       opponent_multisig: {
@@ -313,7 +313,7 @@ export class Client {
         threshold: action.mtg.threshold,
       },
     };
-    return this.mixinApi.payment.request(tx);
+    return this.mixinApi.transfer.toAddress(this.keystore.pin, tx);
   }
 
   createAction(params: {

@@ -1,10 +1,5 @@
 import forge from "node-forge";
-import {
-  parse as UUIDParse,
-  stringify as uuidStringify,
-  v4 as uuid,
-} from "uuid";
-import { SHA3 } from "sha3";
+import { parse as UUIDParse, stringify as uuidStringify } from "uuid";
 import { NfoDefaultChain, NfoDefaultClass } from "./constant";
 
 export function uniqueTokenId(
