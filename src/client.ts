@@ -1,8 +1,22 @@
-import { MixinApi, signAccessToken } from "@mixin.dev/mixin-node-sdk";
+import {
+  buildMintCollectibleMemo,
+  CollectibleOutputsResponse,
+  DumpOutputFromGhostKey,
+  dumpTransaction,
+  MixinApi,
+  signAccessToken,
+  SnapshotResponse,
+} from "@mixin.dev/mixin-node-sdk";
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import { Collectible, Collection, Keystore, Metadata, Order } from "./types";
 import { v4 as uuidv4 } from "uuid";
-import { ExchangeAssetId, ExchangeMinimumAmount } from "./constant";
+import {
+  CollectibleAsset,
+  ExchangeAssetId,
+  ExchangeMinimumAmount,
+  TridentMTG,
+  TxVersion,
+} from "./constant";
 import { uniqueTokenId } from "./utils";
 
 export class Client {
@@ -101,6 +115,73 @@ export class Client {
     });
   }
 
+  async deposit(collection_id: string, identifier: number): Promise<any> {
+    const token_id = uniqueTokenId(collection_id, identifier);
+    let collectible = await this.findCollectible(token_id, "unspent");
+    if (!collectible) {
+      collectible = await this.findCollectible(token_id, "signed");
+    }
+
+    if (!collectible) throw new Error("cannot find collectible in wallet");
+
+    return this.transferCollecitble({
+      collection_id,
+      identifier,
+      output: collectible,
+      receivers: TridentMTG.members,
+      threshold: TridentMTG.threshold,
+      extra: "DEPOSIT",
+    });
+  }
+
+  async withdraw(
+    collection_id: string,
+    identifier: number,
+    params?: { trace_id?: string }
+  ): Promise<SnapshotResponse> {
+    if (!this.keystore || !this.mixinApi) {
+      throw new Error("keystore required");
+    }
+
+    const token_id = uniqueTokenId(collection_id, identifier);
+    const action = await this.createAction({
+      type: "W",
+      token_id: token_id,
+    });
+
+    const tx = {
+      asset_id: ExchangeAssetId,
+      amount: ExchangeMinimumAmount,
+      memo: action.memo,
+      trace_id: params?.trace_id || uuidv4(),
+      opponent_multisig: {
+        receivers: action.mtg.members,
+        threshold: action.mtg.threshold,
+      },
+    };
+
+    return this.mixinApi.transfer.toAddress(this.keystore.pin, tx);
+  }
+
+  async airdrop(collection_id: string, identifier: number): Promise<any> {
+    const token_id = uniqueTokenId(collection_id, identifier);
+    let collectible = await this.findCollectible(token_id, "unspent");
+    if (!collectible) {
+      collectible = await this.findCollectible(token_id, "signed");
+    }
+
+    if (!collectible) throw new Error("cannot find collectible in wallet");
+
+    return this.transferCollecitble({
+      collection_id,
+      identifier,
+      output: collectible,
+      receivers: TridentMTG.members,
+      threshold: TridentMTG.threshold,
+      extra: "AIRDROP",
+    });
+  }
+
   orders(params?: {
     collection_id?: string;
     state?: "open" | "completed";
@@ -123,19 +204,19 @@ export class Client {
 
   async askOrder(
     collection_id: string,
-    identerfier: number,
+    identifier: number,
     params: {
       price: string;
       asset_id: string;
       expired_at?: number;
       trace_id?: string;
     }
-  ): Promise<Object> {
+  ): Promise<SnapshotResponse> {
     if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
-    const token_id = uniqueTokenId(collection_id, identerfier);
+    const token_id = uniqueTokenId(collection_id, identifier);
     const action = await this.createAction({
       type: "A",
       token_id: token_id,
@@ -160,7 +241,7 @@ export class Client {
 
   async auctionOrder(
     collection_id: string,
-    identerfier: number,
+    identifier: number,
     params: {
       price: string;
       asset_id: string;
@@ -168,12 +249,12 @@ export class Client {
       expired_at?: number;
       trace_id?: string;
     }
-  ): Promise<Object> {
+  ): Promise<SnapshotResponse> {
     if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
-    const token_id = uniqueTokenId(collection_id, identerfier);
+    const token_id = uniqueTokenId(collection_id, identifier);
     const action = await this.createAction({
       type: "AU",
       token_id: token_id,
@@ -199,19 +280,19 @@ export class Client {
 
   async bidOrder(
     collection_id: string,
-    identerfier: number,
+    identifier: number,
     params: {
       price: string;
       asset_id: string;
       expired_at?: number;
       trace_id?: string;
     }
-  ): Promise<Object> {
+  ): Promise<SnapshotResponse> {
     if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
-    const token_id = uniqueTokenId(collection_id, identerfier);
+    const token_id = uniqueTokenId(collection_id, identifier);
     const action = await this.createAction({
       type: "B",
       token_id: token_id,
@@ -235,17 +316,17 @@ export class Client {
 
   async fillOrder(
     collection_id: string,
-    identerfier: number,
+    identifier: number,
     params: {
       order_id: string;
       trace_id?: string;
     }
-  ): Promise<Object> {
+  ): Promise<SnapshotResponse> {
     if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
-    const token_id = uniqueTokenId(collection_id, identerfier);
+    const token_id = uniqueTokenId(collection_id, identifier);
     const action = await this.createAction({
       type: "F",
       token_id: token_id,
@@ -275,17 +356,17 @@ export class Client {
 
   async cancelOrder(
     collection_id: string,
-    identerfier: number,
+    identifier: number,
     params: {
       order_id: string;
       trace_id?: string;
     }
-  ): Promise<Object> {
+  ): Promise<SnapshotResponse> {
     if (!this.keystore || !this.mixinApi) {
       throw new Error("keystore required");
     }
 
-    const token_id = uniqueTokenId(collection_id, identerfier);
+    const token_id = uniqueTokenId(collection_id, identifier);
     const action = await this.createAction({
       type: "C",
       token_id: token_id,
@@ -317,7 +398,7 @@ export class Client {
   }
 
   createAction(params: {
-    type: "A" | "AU" | "B" | "F" | "C";
+    type: "A" | "AU" | "B" | "F" | "C" | "W";
     token_id: string;
     order_id?: string;
     price?: string;
@@ -377,6 +458,12 @@ export class Client {
           O: params.order_id,
         };
         break;
+      case "W":
+        data = {
+          T: "W",
+          N: params.token_id,
+        };
+        break;
     }
 
     return this.api.post("/api/actions", data, {
@@ -394,6 +481,97 @@ export class Client {
     return signAccessToken("GET", "/me", "", uuidv4(), {
       user_id: this.keystore.client_id,
       ...this.keystore,
+    });
+  }
+
+  async findCollectible(
+    token_id: string,
+    state: "unspent" | "signed" | "spent"
+  ): Promise<CollectibleOutputsResponse | undefined> {
+    if (!this.keystore || !this.mixinApi) {
+      throw new Error("keystore required");
+    }
+
+    let outputs = [];
+    let output;
+    let offset = "";
+
+    do {
+      outputs = await this.mixinApi.collection.outputs({
+        state,
+        limit: 500,
+        offset,
+        members: [this.keystore.client_id],
+        threshold: 1,
+      });
+      output = outputs.find((c) => c.token_id == token_id);
+      offset = outputs[outputs.length - 1].updated_at;
+    } while (outputs.length < 500);
+
+    return output;
+  }
+
+  async transferCollecitble(params: {
+    collection_id: string;
+    identifier: number;
+    output: CollectibleOutputsResponse;
+    receivers: string[];
+    threshold: number;
+    extra: string;
+  }): Promise<any> {
+    if (!this.keystore || !this.mixinApi) {
+      throw new Error("keystore required");
+    }
+
+    const { collection_id, identifier, output, extra } = params;
+
+    if (output.state == "spent") {
+      throw Error("collectible has been spent");
+    }
+    if (output.state == "signed") {
+      return this.mixinApi.external.proxy({
+        method: "sendrawtransaction",
+        params: [output.signed_tx],
+      });
+    }
+
+    const ghostOutput = await this.mixinApi.transfer.outputs({
+      receivers: params.receivers,
+      index: 0,
+      hint: uuidv4(),
+    });
+    const ghostOutputKey = DumpOutputFromGhostKey(ghostOutput[0], "1", 1);
+    const tx = {
+      version: TxVersion,
+      asset: CollectibleAsset,
+      extra: buildMintCollectibleMemo(
+        collection_id,
+        identifier.toString(),
+        extra
+      ),
+      inputs: [
+        {
+          hash: output.transaction_hash,
+          index: output.output_index,
+        },
+      ],
+      outputs: [ghostOutputKey],
+    };
+    const raw = dumpTransaction(tx);
+
+    const request = await this.mixinApi.collection.request({
+      action: "sign",
+      raw,
+    });
+
+    const res = await this.mixinApi.collection.sign(
+      this.keystore.pin,
+      request.request_id
+    );
+
+    return this.mixinApi.external.proxy({
+      method: "sendrawtransaction",
+      params: [res.raw_transaction],
     });
   }
 }
