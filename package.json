@@ -1,6 +1,6 @@
 {
   "name": "trident-sdk-js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Trident SDK",
   "main": "index.js",
   "repository": "https://github.com/an-lee/trident-sdk-js.git",
