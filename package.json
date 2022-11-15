@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "Trident SDK",
   "main": "index.js",
-  "repository": "https://github.com/TheTridentOne/trident-sdk-js.git",
-  "author": "Trident",
+  "repository": "https://github.com/an-lee/trident-sdk-js.git",
+  "author": "an-lee <an.lee.work@gmail.com>",
   "license": "MIT",
   "private": false,
   "scripts": {
