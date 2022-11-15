@@ -1,8 +1,8 @@
 {
   "name": "trident-sdk-js",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Trident SDK",
-  "main": "index.js",
+  "main": "dist/index.js",
   "repository": "https://github.com/an-lee/trident-sdk-js.git",
   "author": "an-lee <an.lee.work@gmail.com>",
   "license": "MIT",
