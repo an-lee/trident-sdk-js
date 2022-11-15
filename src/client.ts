@@ -215,6 +215,51 @@ export class Client {
     });
   }
 
+  async transfer(
+    collection_id: string,
+    identifier: number,
+    params: {
+      receivers: string[];
+      threshold: number;
+      memo?: string;
+    }
+  ): Promise<any> {
+    if (!this.keystore || !this.mixinApi) {
+      throw new Error("keystore required");
+    }
+
+    const token_id = buildTokenId(collection_id, identifier);
+    let collectible = await this.findCollectible(token_id, "unspent");
+    if (!collectible) {
+      collectible = await this.findCollectible(token_id, "signed");
+    }
+
+    if (!collectible) throw new Error("cannot find collectible in wallet");
+
+    if (collectible.state == "signed") {
+      return this.mixinApi.external.proxy({
+        method: "sendrawtransaction",
+        params: [collectible.signed_tx],
+      });
+    }
+    const request = await buildNfoTransferRequest(
+      this.mixinApi,
+      collectible.transaction_hash,
+      params.receivers,
+      params.threshold,
+      params.memo ? Buffer.from(params.memo).toString("hex") : ""
+    );
+
+    const signed = await this.mixinApi.collection.sign(
+      this.keystore.pin,
+      request.request_id
+    );
+    return this.mixinApi.external.proxy({
+      method: "sendrawtransaction",
+      params: [signed.raw_transaction],
+    });
+  }
+
   orders(params?: {
     collection_id?: string;
     state?: "open" | "completed";

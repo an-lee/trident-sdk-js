@@ -6,9 +6,7 @@ describe("client", () => {
   let client: Client;
 
   beforeEach(() => {
-    client = new Client(
-      Object.assign({}, keystore, { user_id: keystore.client_id })
-    );
+    client = new Client(keystore);
   });
 
   it("client created", () => {
