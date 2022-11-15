@@ -90,4 +90,29 @@ describe("client", () => {
     expect(res).toHaveProperty("memo");
     expect(res).toHaveProperty("mtg");
   });
+
+  it("deposit", async () => {
+    const res = await client.deposit(
+      "dbef5999-fcb1-4f58-b84f-6b7af9694280",
+      664
+    );
+    expect(res).toHaveProperty("hash");
+  });
+
+  it("airdrop", async () => {
+    const res = await client.airdrop(
+      "dbef5999-fcb1-4f58-b84f-6b7af9694280",
+      664,
+      { receiver_id: "7ed9292d-7c95-4333-aa48-a8c640064186" }
+    );
+    expect(res).toHaveProperty("hash");
+  });
+
+  it("withdraw", async () => {
+    const res = await client.withdraw(
+      "dbef5999-fcb1-4f58-b84f-6b7af9694280",
+      664
+    );
+    expect(res).toHaveProperty("type");
+  });
 });

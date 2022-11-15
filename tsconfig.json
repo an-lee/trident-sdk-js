@@ -5,6 +5,8 @@
     "allowSyntheticDefaultImports": true,
     "target": "es6",
     "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "sourceMap": true,
     "outDir": "dist",
     "rootDir": "src",
@@ -19,6 +21,11 @@
     "strict": true,
     "strictNullChecks": true,
     "resolveJsonModule": true,
+    "lib": ["dom", "esnext"],
+    "jsx": "react",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
     "paths": {
       "*": ["node_modules/*", "src/types/*"]
     }
